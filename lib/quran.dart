@@ -21,6 +21,7 @@ import 'page_data.dart';
 import 'quran_text.dart';
 import 'sajdah_verses.dart';
 import 'surah_data.dart';
+import 'hadith_data.dart';
 
 ///Takes [pageNumber] and returns a list containing Surahs and the starting and ending Verse numbers in that page
 ///
@@ -61,6 +62,136 @@ const int totalSurahCount = 114;
 
 ///The constant total verse count
 const int totalVerseCount = 6236;
+
+///The total hadith books count
+final int totalHadithBooksCount = hadiths.length;
+
+///Takes [bookNumber] and returns hadith book details
+Map<String, dynamic> getHadithBook(int bookNumber) {
+  if (bookNumber <= 0 || bookNumber > totalHadithBooksCount) {
+    throw "Invalid book number. Book number must be between 1 and $totalHadithBooksCount";
+  }
+
+  final book = hadiths[bookNumber - 1];
+
+  return {
+    "book": bookNumber,
+    "name": book["name"],
+    "hadiths": List<Map<String, dynamic>>.from(book["hadiths"] as List),
+  };
+}
+
+///Takes [bookNumber] and returns total hadith count in that book
+int getHadithCountByBook(int bookNumber) {
+  if (bookNumber <= 0 || bookNumber > totalHadithBooksCount) {
+    throw "Invalid book number. Book number must be between 1 and $totalHadithBooksCount";
+  }
+
+  return (hadiths[bookNumber - 1]["hadiths"] as List).length;
+}
+
+///Returns total hadith count from all books
+int getTotalHadithCount() {
+  int total = 0;
+  for (final book in hadiths) {
+    total += (book["hadiths"] as List).length;
+  }
+  return total;
+}
+
+///Takes [bookNumber], [hadithNumber] and returns a single hadith
+Map<String, dynamic> getHadith(int bookNumber, int hadithNumber) {
+  if (bookNumber <= 0 || bookNumber > totalHadithBooksCount) {
+    throw "Invalid book number. Book number must be between 1 and $totalHadithBooksCount";
+  }
+
+  final hadithsInBook = List<Map<String, dynamic>>.from(
+    hadiths[bookNumber - 1]["hadiths"] as List,
+  );
+
+  if (hadithNumber <= 0 || hadithNumber > hadithsInBook.length) {
+    throw "Invalid hadith number. Hadith number must be between 1 and ${hadithsInBook.length}";
+  }
+
+  final hadith = hadithsInBook[hadithNumber - 1];
+
+  return {
+    "book": bookNumber,
+    "bookName": hadiths[bookNumber - 1]["name"],
+    "hadith": hadithNumber,
+    ...hadith,
+  };
+}
+
+///Takes [pageNumber], [pageSize] and returns paginated hadiths from all books
+Map<String, dynamic> getAllHadithsPaginated(
+  int pageNumber, {
+  int pageSize = 20,
+}) {
+  if (pageNumber <= 0) {
+    throw "Invalid page number. Page number must be greater than 0";
+  }
+
+  if (pageSize <= 0) {
+    throw "Invalid page size. Page size must be greater than 0";
+  }
+
+  final allHadiths = _flattenHadiths();
+
+  if (allHadiths.isEmpty) {
+    return {
+      "pageNumber": 1,
+      "pageSize": pageSize,
+      "totalPages": 0,
+      "totalHadiths": 0,
+      "hadiths": <Map<String, dynamic>>[],
+    };
+  }
+
+  final totalPages = (allHadiths.length / pageSize).ceil();
+
+  if (pageNumber > totalPages) {
+    throw "Invalid page number. Page number must be between 1 and $totalPages";
+  }
+
+  final start = (pageNumber - 1) * pageSize;
+  final end = min(start + pageSize, allHadiths.length);
+
+  return {
+    "pageNumber": pageNumber,
+    "pageSize": pageSize,
+    "totalPages": totalPages,
+    "totalHadiths": allHadiths.length,
+    "hadiths": allHadiths.sublist(start, end),
+  };
+}
+
+///Internal helper to flatten all hadith books into one list for pagination.
+List<Map<String, dynamic>> _flattenHadiths() {
+  final List<Map<String, dynamic>> allHadiths = [];
+
+  for (int bookIndex = 0; bookIndex < hadiths.length; bookIndex++) {
+    final book = hadiths[bookIndex];
+    final hadithsInBook = List<Map<String, dynamic>>.from(
+      book["hadiths"] as List,
+    );
+
+    for (
+      int hadithIndex = 0;
+      hadithIndex < hadithsInBook.length;
+      hadithIndex++
+    ) {
+      allHadiths.add({
+        "book": bookIndex + 1,
+        "bookName": book["name"],
+        "hadith": hadithIndex + 1,
+        ...hadithsInBook[hadithIndex],
+      });
+    }
+  }
+
+  return allHadiths;
+}
 
 ///The constant 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ'
 const String basmala = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";

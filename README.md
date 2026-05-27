@@ -17,6 +17,7 @@ To use this plugin, add `quran` as a [dependency in your pubspec.yaml file](http
 -   **`totalPagesCount`** - The most standard and common copy of Arabic only Quran total pages count
 -   **`totalSurahCount`** - The constant total surah count
 -   **`totalVerseCount`** - The constant total verse count
+-   **`totalHadithBooksCount`** - The total hadith books count
 
 **Functions:**
 
@@ -50,6 +51,49 @@ To use this plugin, add `quran` as a [dependency in your pubspec.yaml file](http
     print(randomVerse.verse);
     print(randomVerse.translation);
     ```
+
+**_Hadith:_**
+
+-   **`getHadithBook(int bookNumber)`** - Takes [bookNumber] and returns hadith book details with all hadiths in that book
+-   **`getHadithCountByBook(int bookNumber)`** - Takes [bookNumber] and returns total hadith count in that book
+-   **`getTotalHadithCount()`** - Returns total hadith count from all books
+-   **`getHadith(int bookNumber, int hadithNumber)`** - Takes [bookNumber], [hadithNumber] and returns one hadith
+-   **`getAllHadithsPaginated(int pageNumber, {int pageSize = 20})`** - Takes [pageNumber], [pageSize] and returns paginated hadiths from all books
+
+#### Hadith Usage Example
+
+```dart
+import 'package:quran/quran.dart' as quran;
+
+void main() {
+  // Load one hadith by book and hadith index (1-based)
+  final oneHadith = quran.getHadith(1, 1);
+  print(oneHadith["bookName"]);
+  print(oneHadith["by"]);
+  print(oneHadith["text"]);
+
+  // Load a full book with all hadiths
+  final book = quran.getHadithBook(2);
+  print(book["name"]);
+  print((book["hadiths"] as List).length);
+
+  // Load all hadiths with pagination
+  final page1 = quran.getAllHadithsPaginated(1, pageSize: 10);
+  print(page1["pageNumber"]); // 1
+  print(page1["totalPages"]);
+  print(page1["totalHadiths"]);
+
+  final hadiths = page1["hadiths"] as List<Map<String, dynamic>>;
+  if (hadiths.isNotEmpty) {
+    print(hadiths.first["info"]);
+  }
+}
+```
+
+> Pagination notes
+> - `pageNumber` is 1-based.
+> - `pageSize` default is `20`.
+> - The paginated response contains: `pageNumber`, `pageSize`, `totalPages`, `totalHadiths`, and `hadiths`.
 
 **_Page:_**
 
